@@ -1,966 +1,584 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Earthworm Snake</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Earthworm Snake</title>
 <style>
-* {
-    box-sizing: border-box;
+  * {
     margin: 0;
     padding: 0;
-}
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-html,
-body {
-    width: 100%;
+  html, body {
     height: 100%;
-    overflow: hidden;
-    background: #000;
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-body {
+    background: #050505;
+    background: radial-gradient(ellipse at center, #0c0c0c 0%, #030303 70%);
     display: flex;
-    justify-content: center;
     align-items: center;
-}
+    justify-content: center;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    overflow: hidden;
+  }
 
-/* =========================
-   GAME CONTAINER
-========================= */
-
-.game-wrapper {
-    position: relative;
-    width: min(90vw, 720px);
-    aspect-ratio: 1 / 1;
-}
-
-canvas {
-    display: block;
+  .game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
     width: 100%;
-    height: 100%;
-    background: #000;
-}
+    max-width: 640px;
+  }
 
-/* =========================
-   DASHED GAME BORDER
-========================= */
-
-.game-border {
-    position: absolute;
-    inset: 0;
-    border: 2px dashed #292929;
-    pointer-events: none;
-}
-
-/* =========================
-   HUD
-========================= */
-
-.hud {
-    position: absolute;
-    top: -42px;
-    left: 0;
-    right: 0;
-
+  .hud {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 0 4px;
+  }
 
-    color: #777;
+  .score-panel {
+    color: #cfcfcf;
+    font-size: 15px;
+    letter-spacing: 2px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px 16px;
+    border-radius: 8px;
+  }
+
+  .score-panel span {
+    color: #e8e8e8;
+    font-weight: 700;
+  }
+
+  .board-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    aspect-ratio: 1 / 1;
+    border: 5px dashed #4a4a4a;
+    border-radius: 10px;
+    background: #080808;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 20px 60px rgba(0, 0, 0, 0.7),
+      inset 0 0 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    background: rgba(3, 3, 3, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    z-index: 10;
+  }
+
+  .overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .overlay-title {
+    color: #eaeaea;
+    font-size: clamp(26px, 6vw, 38px);
+    letter-spacing: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  }
+
+  .overlay-title.game-over {
+    color: #d9463f;
+  }
+
+  .overlay-sub {
+    color: #808080;
     font-size: 13px;
     letter-spacing: 2px;
-    text-transform: uppercase;
-}
+    margin-top: -12px;
+  }
 
-.score {
-    color: #aaa;
-}
-
-/* =========================
-   START / GAME OVER OVERLAY
-========================= */
-
-.overlay {
-    position: absolute;
-    inset: 0;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    background:
-        radial-gradient(
-            circle at center,
-            rgba(30, 30, 30, 0.18),
-            rgba(0, 0, 0, 0.88)
-        );
-
-    backdrop-filter: blur(2px);
-
-    opacity: 1;
-    visibility: visible;
-
-    transition:
-        opacity 0.45s ease,
-        visibility 0.45s ease;
-}
-
-.overlay.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-.panel {
-    text-align: center;
-    transform: translateY(0);
-    transition: transform 0.45s ease;
-}
-
-.overlay.hidden .panel {
-    transform: translateY(-12px);
-}
-
-.title {
-    color: #e5e5e5;
-    font-size: clamp(26px, 5vw, 42px);
-    font-weight: 500;
-    letter-spacing: 8px;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    color: #555;
-    font-size: 11px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: 30px;
-}
-
-/* =========================
-   PROFESSIONAL BUTTON
-========================= */
-
-.game-button {
-    position: relative;
-
-    min-width: 190px;
-    padding: 15px 30px;
-
-    border: 1px solid #3a3a3a;
-    border-radius: 4px;
-
-    background: #080808;
-    color: #ddd;
-
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-
+  .game-btn {
+    appearance: none;
+    border: none;
+    outline: none;
     cursor: pointer;
+    padding: 14px 40px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0a0a0a;
+    background: linear-gradient(180deg, #e8e8e8 0%, #c4c4c4 100%);
+    border-radius: 30px;
+    box-shadow:
+      0 6px 0 #6f6f6f,
+      0 10px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+  }
 
-    transition:
-        transform 0.2s ease,
-        background 0.25s ease,
-        border-color 0.25s ease,
-        box-shadow 0.25s ease;
-}
-
-.game-button::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    border-radius: inherit;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,0.07),
-        transparent
-    );
-
-    transform: translateX(-100%);
-    transition: transform 0.5s ease;
-}
-
-.game-button:hover {
-    background: #111;
-    border-color: #666;
+  .game-btn:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #d4d4d4 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(255,255,255,0.05);
-}
+    box-shadow:
+      0 8px 0 #6f6f6f,
+      0 14px 26px rgba(0, 0, 0, 0.55);
+  }
 
-.game-button:hover::before {
-    transform: translateX(100%);
-}
+  .game-btn:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 2px 0 #6f6f6f,
+      0 4px 10px rgba(0, 0, 0, 0.5);
+  }
 
-.game-button:active {
-    transform: scale(0.96);
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 600px) {
-    .game-wrapper {
-        width: 92vw;
-    }
-
-    .hud {
-        top: -32px;
-        font-size: 10px;
-    }
-
-    .game-button {
-        min-width: 165px;
-        padding: 13px 20px;
-    }
-}
+  .footer-hint {
+    color: #4a4a4a;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-align: center;
+  }
 </style>
 </head>
-
 <body>
 
-<div class="game-wrapper">
-
+  <div class="game-wrapper">
     <div class="hud">
-        <div>EARTHWORM</div>
-        <div class="score">
-            SCORE <span id="score">0</span>
-        </div>
+      <div class="score-panel">SCORE&nbsp; <span id="scoreDisplay">0</span></div>
+      <div class="score-panel">BEST&nbsp; <span id="bestDisplay">0</span></div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <div class="board-container" id="boardContainer">
+      <canvas id="gameCanvas"></canvas>
 
-    <div class="game-border"></div>
+      <div class="overlay" id="startOverlay">
+        <div class="overlay-title">Earthworm</div>
+        <div class="overlay-sub">Arrow keys or WASD to move</div>
+        <button class="game-btn" id="startBtn">Start Game</button>
+      </div>
 
-    <!-- START / GAME OVER -->
-    <div class="overlay" id="overlay">
-
-        <div class="panel">
-
-            <div class="title" id="overlayTitle">
-                EARTHWORM
-            </div>
-
-            <div class="subtitle" id="overlaySubtitle">
-                A dark snake experience
-            </div>
-
-            <button class="game-button" id="gameButton">
-                START GAME
-            </button>
-
-        </div>
-
+      <div class="overlay hidden" id="gameOverOverlay">
+        <div class="overlay-title game-over">Game Over</div>
+        <div class="overlay-sub" id="finalScoreText">Score: 0</div>
+        <button class="game-btn" id="playAgainBtn">Play Again</button>
+      </div>
     </div>
 
-</div>
-
+    <div class="footer-hint">Stay inside the dashed boundary — don't cross your own trail</div>
+  </div>
 
 <script>
+(function () {
+  'use strict';
 
-/* =========================================
-   CANVAS
-========================================= */
+  // ---------------------------------------------------------------------
+  // SETUP
+  // ---------------------------------------------------------------------
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const boardContainer = document.getElementById('boardContainer');
+  const startOverlay = document.getElementById('startOverlay');
+  const gameOverOverlay = document.getElementById('gameOverOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const bestDisplay = document.getElementById('bestDisplay');
+  const finalScoreText = document.getElementById('finalScoreText');
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+  // Fixed internal logical resolution — independent of CSS/display scaling.
+  const LOGICAL_SIZE = 600;
+  const PADDING = 14;          // keeps the worm's head visually inside the dashed border
+  const MIN_X = PADDING, MAX_X = LOGICAL_SIZE - PADDING;
+  const MIN_Y = PADDING, MAX_Y = LOGICAL_SIZE - PADDING;
 
-const wrapper = document.querySelector(".game-wrapper");
+  let dpr = window.devicePixelRatio || 1;
 
-const overlay = document.getElementById("overlay");
-const overlayTitle = document.getElementById("overlayTitle");
-const overlaySubtitle = document.getElementById("overlaySubtitle");
-const gameButton = document.getElementById("gameButton");
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = LOGICAL_SIZE * dpr;
+    canvas.height = LOGICAL_SIZE * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
-const scoreElement = document.getElementById("score");
+  // ---------------------------------------------------------------------
+  // GAME STATE
+  // ---------------------------------------------------------------------
+  const START_THICKNESS = 14;      // px, within the 12-16px requirement
+  const SEGMENT_SPACING = 15;      // logical body-length added per food item
+  const SPEED = 150;               // px / second
+  const HEAD_RADIUS = START_THICKNESS / 2;
 
+  let gameRunning = false;
+  let gameOver = false;
+  let score = 0;
+  let best = Number(localStorage.getItem('earthworm_best') || 0) || 0;
+  bestDisplay.textContent = best;
 
-/* =========================================
-   CANVAS SIZE
-========================================= */
+  let head = { x: 0, y: 0 };
+  let direction = { x: 1, y: 0 };   // current movement vector
+  let pendingDirection = { x: 1, y: 0 };
+  let bodyLength = 0;               // total desired length of the worm, in px
+  let path = [];                    // recorded head positions (trail), most-recent first
+  let food = { x: 0, y: 0 };
+  let lastTimestamp = null;
+  let rafId = null;
 
-function resizeCanvas() {
+  // Web Audio context is created lazily on first user gesture (Start button click).
+  let audioCtx = null;
 
-    const rect = wrapper.getBoundingClientRect();
+  function playEatSound() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  }
 
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-}
-
-resizeCanvas();
-
-window.addEventListener("resize", resizeCanvas);
-
-
-/* =========================================
-   GAME VARIABLES
-========================================= */
-
-let snake = [];
-let food = null;
-
-let direction = {
-    x: 1,
-    y: 0
-};
-
-let nextDirection = {
-    x: 1,
-    y: 0
-};
-
-let score = 0;
-
-let gameRunning = false;
-let gameOver = false;
-
-let animationId = null;
-
-let lastTime = 0;
-
-const speed = 115;
-
-
-/* =========================================
-   SNAKE SETTINGS
-========================================= */
-
-const START_SEGMENTS = 2;
-
-const START_SIZE = 3.2;
-
-const MAX_SIZE = 10;
-
-const GROW_AMOUNT = 1;
-
-
-/* =========================================
-   RESET GAME
-========================================= */
-
-function resetGame() {
-
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-
-    snake = [];
-
-    /*
-        TWO EXTREMELY SMALL SEGMENTS
-        They are close enough to visually
-        behave like one tiny earthworm.
-    */
-
-    snake.push({
-        x: centerX,
-        y: centerY,
-        radius: START_SIZE
-    });
-
-    snake.push({
-        x: centerX - 4,
-        y: centerY,
-        radius: START_SIZE
-    });
-
-    direction = {
-        x: 1,
-        y: 0
-    };
-
-    nextDirection = {
-        x: 1,
-        y: 0
-    };
-
+  // ---------------------------------------------------------------------
+  // RESET / INIT
+  // ---------------------------------------------------------------------
+  function resetGame() {
     score = 0;
+    scoreDisplay.textContent = '0';
 
-    scoreElement.textContent = score;
+    head.x = LOGICAL_SIZE / 2;
+    head.y = LOGICAL_SIZE / 2;
+    direction = { x: 1, y: 0 };
+    pendingDirection = { x: 1, y: 0 };
 
-    food = createFood();
+    // Exactly 2 starting segments worth of body length.
+    bodyLength = SEGMENT_SPACING * 2;
 
-    gameOver = false;
-}
-
-
-/* =========================================
-   FOOD
-========================================= */
-
-function createFood() {
-
-    const padding = 25;
-
-    let newFood;
-
-    do {
-
-        newFood = {
-            x: padding + Math.random() * (canvas.width - padding * 2),
-            y: padding + Math.random() * (canvas.height - padding * 2),
-            radius: 5
-        };
-
-    } while (isFoodInsideSnake(newFood));
-
-    return newFood;
-}
-
-
-function isFoodInsideSnake(foodObject) {
-
-    for (const segment of snake) {
-
-        const dx = foodObject.x - segment.x;
-        const dy = foodObject.y - segment.y;
-
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < segment.radius + 15) {
-            return true;
-        }
+    // Seed the path with points trailing behind the head so the worm
+    // already looks like one continuous connected body at t = 0.
+    path = [];
+    const seedSteps = 60;
+    for (let i = 0; i <= seedSteps; i++) {
+      path.push({
+        x: head.x - direction.x * i * 1.5,
+        y: head.y - direction.y * i * 1.5
+      });
     }
 
+    spawnFood();
+    lastTimestamp = null;
+  }
+
+  function spawnFood() {
+    // Keep the new ball well clear of the head so the worm can never
+    // spawn-in on top of it and chain-eat instantly.
+    const HEAD_CLEARANCE = 90;
+    const BODY_CLEARANCE = 26;
+
+    let candidate = null;
+    let attempts = 0;
+    const MAX_RANDOM_ATTEMPTS = 100;
+
+    while (attempts < MAX_RANDOM_ATTEMPTS) {
+      const c = {
+        x: MIN_X + Math.random() * (MAX_X - MIN_X),
+        y: MIN_Y + Math.random() * (MAX_Y - MIN_Y)
+      };
+      attempts++;
+      if (dist(c, head) >= HEAD_CLEARANCE && !isNearBody(c, BODY_CLEARANCE)) {
+        candidate = c;
+        break;
+      }
+    }
+
+    // Guaranteed fallback: scan a coarse grid of the playable area and
+    // pick whichever valid cell is farthest from the head. This always
+    // terminates with a legal, well-separated position.
+    if (!candidate) {
+      let best = null;
+      let bestDist = -1;
+      const GRID_STEP = 24;
+      for (let gx = MIN_X; gx <= MAX_X; gx += GRID_STEP) {
+        for (let gy = MIN_Y; gy <= MAX_Y; gy += GRID_STEP) {
+          const c = { x: gx, y: gy };
+          if (isNearBody(c, BODY_CLEARANCE)) continue;
+          const d = dist(c, head);
+          if (d > bestDist) {
+            bestDist = d;
+            best = c;
+          }
+        }
+      }
+      candidate = best || { x: LOGICAL_SIZE / 2, y: LOGICAL_SIZE / 2 };
+    }
+
+    food = candidate;
+  }
+
+  function isNearBody(point, threshold) {
+    if (dist(point, head) < threshold) return true;
+    for (let i = 0; i < path.length; i += 4) {
+      if (dist(point, path[i]) < threshold) return true;
+    }
     return false;
-}
+  }
 
+  function dist(a, b) {
+    const dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
 
-/* =========================================
-   KEYBOARD CONTROLS
-========================================= */
+  // ---------------------------------------------------------------------
+  // INPUT
+  // ---------------------------------------------------------------------
+  function setDirection(nx, ny) {
+    // Prevent an instant 180-degree reversal.
+    if (direction.x === -nx && direction.y === -ny) return;
+    pendingDirection = { x: nx, y: ny };
+  }
 
-document.addEventListener("keydown", function(event) {
+  window.addEventListener('keydown', (e) => {
+    if (!gameRunning) return;
+    switch (e.key) {
+      case 'ArrowUp': case 'w': case 'W': setDirection(0, -1); e.preventDefault(); break;
+      case 'ArrowDown': case 's': case 'S': setDirection(0, 1); e.preventDefault(); break;
+      case 'ArrowLeft': case 'a': case 'A': setDirection(-1, 0); e.preventDefault(); break;
+      case 'ArrowRight': case 'd': case 'D': setDirection(1, 0); e.preventDefault(); break;
+    }
+  }, { passive: false });
 
-    const key = event.key.toLowerCase();
-
+  // ---------------------------------------------------------------------
+  // GAME LOOP
+  // ---------------------------------------------------------------------
+  function gameLoop(timestamp) {
     if (!gameRunning) return;
 
-    if (
-        (key === "arrowup" || key === "w") &&
-        direction.y !== 1
-    ) {
-        nextDirection = { x: 0, y: -1 };
+    if (lastTimestamp === null) lastTimestamp = timestamp;
+    let dt = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+    // Guard against huge dt spikes (e.g. tab was backgrounded).
+    if (dt > 0.1) dt = 0.1;
+
+    update(dt);
+    render();
+
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function update(dt) {
+    direction = pendingDirection;
+
+    const step = SPEED * dt;
+    head.x += direction.x * step;
+    head.y += direction.y * step;
+
+    // Record the new head position into the path history.
+    path.unshift({ x: head.x, y: head.y });
+
+    // Trim the path so it never grows unbounded (keep a safety buffer
+    // beyond the current visible body length).
+    const maxPathDistanceNeeded = bodyLength + 60;
+    let travelled = 0;
+    for (let i = 1; i < path.length; i++) {
+      travelled += dist(path[i - 1], path[i]);
+      if (travelled > maxPathDistanceNeeded) {
+        path.length = i + 1;
+        break;
+      }
     }
 
-    if (
-        (key === "arrowdown" || key === "s") &&
-        direction.y !== -1
-    ) {
-        nextDirection = { x: 0, y: 1 };
+    // --- Boundary collision ---
+    if (head.x - HEAD_RADIUS < 0 || head.x + HEAD_RADIUS > LOGICAL_SIZE ||
+        head.y - HEAD_RADIUS < 0 || head.y + HEAD_RADIUS > LOGICAL_SIZE) {
+      return endGame();
     }
 
-    if (
-        (key === "arrowleft" || key === "a") &&
-        direction.x !== 1
-    ) {
-        nextDirection = { x: -1, y: 0 };
+    // --- Self collision ---
+    // Skip points close to the head (they're always near it) to avoid
+    // false positives right after a turn.
+    const skipDistance = HEAD_RADIUS * 3.2;
+    let d = 0;
+    for (let i = 1; i < path.length; i++) {
+      d += dist(path[i - 1], path[i]);
+      if (d < skipDistance) continue;
+      if (d > bodyLength) break;
+      if (dist(head, path[i]) < HEAD_RADIUS * 0.9) {
+        return endGame();
+      }
     }
 
-    if (
-        (key === "arrowright" || key === "d") &&
-        direction.x !== -1
-    ) {
-        nextDirection = { x: 1, y: 0 };
+    // --- Food collision ---
+    if (dist(head, food) < HEAD_RADIUS + 9) {
+      score += 1;
+      scoreDisplay.textContent = String(score);
+      bodyLength += SEGMENT_SPACING;
+      playEatSound();
+      spawnFood();
     }
-
-});
-
-
-/* =========================================
-   START GAME
-========================================= */
-
-function startGame() {
-
-    resetGame();
-
-    gameRunning = true;
-
-    overlay.classList.add("hidden");
-
-    lastTime = performance.now();
-
-    cancelAnimationFrame(animationId);
-
-    animationId = requestAnimationFrame(gameLoop);
-}
-
-
-/* =========================================
-   GAME OVER
-========================================= */
-
-function endGame() {
-
-    gameRunning = false;
-
-    gameOver = true;
-
-    overlayTitle.textContent = "GAME OVER";
-
-    overlaySubtitle.textContent =
-        "Your worm reached " + score + " food";
-
-    gameButton.textContent = "PLAY AGAIN";
-
-    overlay.classList.remove("hidden");
-}
-
-
-/* =========================================
-   BUTTON
-========================================= */
-
-gameButton.addEventListener("click", function() {
-
-    if (gameOver) {
-
-        overlayTitle.textContent = "EARTHWORM";
-
-        overlaySubtitle.textContent =
-            "A dark snake experience";
-    }
-
-    startGame();
-});
-
-
-/* =========================================
-   GAME UPDATE
-========================================= */
-
-function update() {
-
-    direction = {
-        x: nextDirection.x,
-        y: nextDirection.y
-    };
-
-    const head = snake[0];
-
-    const moveDistance = 5;
-
-    const newHead = {
-        x: head.x + direction.x * moveDistance,
-        y: head.y + direction.y * moveDistance,
-        radius: Math.min(
-            MAX_SIZE,
-            START_SIZE + snake.length * 0.08
-        )
-    };
-
-    /* =========================
-       WALL COLLISION
-    ========================= */
-
-    const wallPadding = 4;
-
-    if (
-        newHead.x < wallPadding ||
-        newHead.x > canvas.width - wallPadding ||
-        newHead.y < wallPadding ||
-        newHead.y > canvas.height - wallPadding
-    ) {
-        endGame();
-        return;
-    }
-
-
-    /* =========================
-       SELF COLLISION
-    ========================= */
-
-    for (let i = 8; i < snake.length; i++) {
-
-        const segment = snake[i];
-
-        const dx = newHead.x - segment.x;
-        const dy = newHead.y - segment.y;
-
-        const distance = Math.sqrt(
-            dx * dx + dy * dy
-        );
-
-        if (distance < newHead.radius + segment.radius - 1) {
-
-            endGame();
-            return;
-        }
-    }
-
-
-    /* =========================
-       ADD HEAD
-    ========================= */
-
-    snake.unshift(newHead);
-
-
-    /* =========================
-       FOOD COLLISION
-    ========================= */
-
-    const dx = newHead.x - food.x;
-    const dy = newHead.y - food.y;
-
-    const distance = Math.sqrt(
-        dx * dx + dy * dy
-    );
-
-    if (
-        distance <
-        newHead.radius + food.radius + 4
-    ) {
-
-        score++;
-
-        scoreElement.textContent = score;
-
-        /*
-            EXACTLY ONE EXTRA SEGMENT
-        */
-
-        for (let i = 0; i < GROW_AMOUNT; i++) {
-
-            const tail = snake[snake.length - 1];
-
-            snake.push({
-                x: tail.x,
-                y: tail.y,
-                radius: Math.min(
-                    MAX_SIZE,
-                    START_SIZE + snake.length * 0.08
-                )
-            });
-        }
-
-        food = createFood();
-
-        playEatSound();
-
-    } else {
-
-        snake.pop();
-    }
-}
-
-
-/* =========================================
-   DRAW FOOD
-========================================= */
-
-function drawFood() {
-
-    if (!food) return;
-
-    ctx.save();
-
-    ctx.beginPath();
-
-    ctx.arc(
-        food.x,
-        food.y,
-        food.radius,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fillStyle = "#777";
-
-    ctx.fill();
-
-    ctx.restore();
-}
-
-
-/* =========================================
-   DRAW EARTHWORM
-========================================= */
-
-function drawSnake() {
-
-    if (snake.length === 0) return;
-
-
-    /*
-        BODY CONNECTION
-
-        Instead of drawing independent circles,
-        draw a continuous thick organic path.
-    */
-
-    ctx.save();
-
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-
-    /* =========================
-       MAIN WORM BODY
-    ========================= */
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        snake[snake.length - 1].x,
-        snake[snake.length - 1].y
-    );
-
-    for (
-        let i = snake.length - 2;
-        i >= 0;
-        i--
-    ) {
-
-        const current = snake[i];
-
-        const previous =
-            snake[Math.min(i + 1, snake.length - 1)];
-
-        const controlX =
-            (current.x + previous.x) / 2;
-
-        const controlY =
-            (current.y + previous.y) / 2;
-
-        ctx.quadraticCurveTo(
-            current.x,
-            current.y,
-            controlX,
-            controlY
-        );
-    }
-
-
-    /*
-        DARK EARTHWORM BODY
-    */
-
-    const bodySize = Math.max(
-        START_SIZE * 2,
-        Math.min(
-            8,
-            START_SIZE + snake.length * 0.10
-        )
-    );
-
-    ctx.lineWidth = bodySize * 2;
-
-    ctx.strokeStyle = "#090909";
-
-    ctx.stroke();
-
-
-    /* =========================
-       ORGANIC BODY HIGHLIGHT
-    ========================= */
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        snake[snake.length - 1].x,
-        snake[snake.length - 1].y
-    );
-
-    for (
-        let i = snake.length - 2;
-        i >= 0;
-        i--
-    ) {
-
-        const current = snake[i];
-
-        const previous =
-            snake[Math.min(i + 1, snake.length - 1)];
-
-        const controlX =
-            (current.x + previous.x) / 2;
-
-        const controlY =
-            (current.y + previous.y) / 2;
-
-        ctx.quadraticCurveTo(
-            current.x,
-            current.y,
-            controlX,
-            controlY
-        );
-    }
-
-    ctx.lineWidth = Math.max(
-        1,
-        bodySize * 0.65
-    );
-
-    ctx.strokeStyle = "#171717";
-
-    ctx.stroke();
-
-
-    /* =========================
-       HEAD
-    ========================= */
-
-    const head = snake[0];
-
-    ctx.beginPath();
-
-    ctx.arc(
-        head.x,
-        head.y,
-        bodySize * 0.95,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fillStyle = "#080808";
-
-    ctx.fill();
-
-
-    /*
-        Tiny natural head highlight.
-        No eyes / cartoon face.
-    */
-
-    ctx.beginPath();
-
-    ctx.arc(
-        head.x - direction.x * 0.5,
-        head.y - direction.y * 0.5,
-        bodySize * 0.45,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fillStyle = "#111";
-
-    ctx.fill();
-
-    ctx.restore();
-}
-
-
-/* =========================================
-   DRAW BOARD
-========================================= */
-
-function draw() {
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+  }
+
+  // ---------------------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------------------
+  function render() {
+    ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
+
+    // subtle board texture
+    ctx.fillStyle = '#080808';
+    ctx.fillRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
 
     drawFood();
+    drawWorm();
+  }
 
-    drawSnake();
-}
+  function drawFood() {
+    const r = 7;
+    const gradient = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, r * 1.8);
+    gradient.addColorStop(0, '#e0473f');
+    gradient.addColorStop(1, '#7a1e1a');
+    ctx.beginPath();
+    ctx.fillStyle = gradient;
+    ctx.arc(food.x, food.y, r, 0, Math.PI * 2);
+    ctx.fill();
 
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.arc(food.x - r * 0.3, food.y - r * 0.3, r * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-/* =========================================
-   GAME LOOP
-========================================= */
-
-function gameLoop(timestamp) {
-
-    if (!gameRunning) return;
-
-    if (
-        timestamp - lastTime >= speed
-    ) {
-
-        update();
-
-        lastTime = timestamp;
+  function drawWorm() {
+    // Build the ordered list of points from head to tail, up to bodyLength.
+    const pts = [{ x: head.x, y: head.y }];
+    let d = 0;
+    for (let i = 0; i < path.length; i++) {
+      const prev = pts[pts.length - 1];
+      const p = path[i];
+      const segDist = dist(prev, p);
+      if (d + segDist > bodyLength) {
+        // Interpolate the exact tail point so the body length is precise.
+        const remaining = bodyLength - d;
+        const t = segDist === 0 ? 0 : remaining / segDist;
+        pts.push({
+          x: prev.x + (p.x - prev.x) * t,
+          y: prev.y + (p.y - prev.y) * t
+        });
+        break;
+      }
+      d += segDist;
+      pts.push(p);
     }
 
-    draw();
+    if (pts.length < 2) return;
 
-    animationId =
-        requestAnimationFrame(gameLoop);
-}
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-
-/* =========================================
-   EATING SOUND
-========================================= */
-
-function playEatSound() {
-
-    try {
-
-        const audioContext =
-            new (
-                window.AudioContext ||
-                window.webkitAudioContext
-            )();
-
-        const oscillator =
-            audioContext.createOscillator();
-
-        const gain =
-            audioContext.createGain();
-
-        oscillator.type = "sine";
-
-        oscillator.frequency.setValueAtTime(
-            280,
-            audioContext.currentTime
-        );
-
-        oscillator.frequency.exponentialRampToValueAtTime(
-            520,
-            audioContext.currentTime + 0.08
-        );
-
-        gain.gain.setValueAtTime(
-            0.08,
-            audioContext.currentTime
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.001,
-            audioContext.currentTime + 0.1
-        );
-
-        oscillator.connect(gain);
-
-        gain.connect(audioContext.destination);
-
-        oscillator.start();
-
-        oscillator.stop(
-            audioContext.currentTime + 0.1
-        );
-
-    } catch (error) {
-        /* Audio unavailable — game continues normally */
+    // Draw as a series of short tapering strokes from head (thick) to tail (thin),
+    // producing one continuous organic body rather than separate visible balls.
+    const total = pts.length;
+    for (let i = 0; i < total - 1; i++) {
+      const t = i / (total - 1);              // 0 at head, 1 at tail
+      const width = START_THICKNESS * (1 - t * 0.55) + 2;
+      const shade = Math.round(18 + t * 10);   // very subtle darkening toward the tail
+      ctx.strokeStyle = `rgb(${shade}, ${shade}, ${shade})`;
+      ctx.lineWidth = Math.max(width, 3);
+      ctx.beginPath();
+      ctx.moveTo(pts[i].x, pts[i].y);
+      ctx.lineTo(pts[i + 1].x, pts[i + 1].y);
+      ctx.stroke();
     }
-}
 
+    // Soft highlight along the head for a subtle sense of dimensionality.
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.arc(head.x, head.y, HEAD_RADIUS * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-/* =========================================
-   INITIAL STATE
-========================================= */
+  // ---------------------------------------------------------------------
+  // START / GAME OVER FLOW
+  // ---------------------------------------------------------------------
+  function startGame() {
+    if (!audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioCtx();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
-resetGame();
+    resetGame();
+    gameOver = false;
+    gameRunning = true;
 
-draw();
+    startOverlay.classList.add('hidden');
+    gameOverOverlay.classList.add('hidden');
 
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastTimestamp = null;
+    render();
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function endGame() {
+    gameRunning = false;
+    gameOver = true;
+
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    if (score > best) {
+      best = score;
+      bestDisplay.textContent = String(best);
+      localStorage.setItem('earthworm_best', String(best));
+    }
+
+    finalScoreText.textContent = `Score: ${score}`;
+    gameOverOverlay.classList.remove('hidden');
+  }
+
+  startBtn.addEventListener('click', startGame);
+  playAgainBtn.addEventListener('click', startGame);
+
+  // ---------------------------------------------------------------------
+  // INITIAL STATIC FRAME (snake visible but still, before Start is pressed)
+  // ---------------------------------------------------------------------
+  resetGame();
+  render();
+})();
 </script>
 
 </body>
 </html>
-```
