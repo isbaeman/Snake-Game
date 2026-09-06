@@ -35,36 +35,46 @@
 
   .hud {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 8px;
     width: 100%;
     max-width: 600px;
     padding: 0 4px;
   }
 
   .score-panel {
-    color: #cfcfcf;
-    font-size: 15px;
-    letter-spacing: 2px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 8px 16px;
-    border-radius: 8px;
+    color: #a8a8a8;
+    font-size: 12px;
+    letter-spacing: 1.8px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 7px 13px;
+    border-radius: 6px;
+    min-width: 112px;
+    text-align: center;
   }
 
   .score-panel span {
-    color: #e8e8e8;
-    font-weight: 700;
+    color: #f0f0f0;
+    font-weight: 800;
+    display: inline-block;
+    min-width: 1ch;
+    transition: transform 0.12s ease;
+  }
+
+  .score-panel span.score-pop {
+    transform: scale(1.18);
   }
 
   .board-container {
     position: relative;
-    width: 100%;
-    max-width: 600px;
+    width: min(100%, 500px);
+    max-width: 500px;
     aspect-ratio: 1 / 1;
-    border: 5px dashed #4a4a4a;
-    border-radius: 10px;
+    border: 3px solid #555555;
+    border-radius: 4px;
     background: #080808;
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.02),
@@ -167,7 +177,7 @@
   <div class="game-wrapper">
     <div class="hud">
       <div class="score-panel">SCORE&nbsp; <span id="scoreDisplay">0</span></div>
-      <div class="score-panel">BEST&nbsp; <span id="bestDisplay">0</span></div>
+      <div class="score-panel">HIGH SCORE&nbsp; <span id="bestDisplay">0</span></div>
     </div>
 
     <div class="board-container" id="boardContainer">
@@ -186,7 +196,7 @@
       </div>
     </div>
 
-    <div class="footer-hint">Stay inside the dashed boundary — don't cross your own trail</div>
+    <div class="footer-hint">Stay inside the square boundary — don't cross your own trail</div>
   </div>
 
 <script>
@@ -246,6 +256,13 @@
   let food = { x: 0, y: 0 };
   let lastTimestamp = null;
   let rafId = null;
+
+  function popScore(element) {
+    element.classList.remove('score-pop');
+    void element.offsetWidth;
+    element.classList.add('score-pop');
+    setTimeout(() => element.classList.remove('score-pop'), 120);
+  }
 
   // Web Audio context is created lazily on first user gesture (Start button click).
   let audioCtx = null;
@@ -439,6 +456,15 @@
     if (dist(head, food) < HEAD_RADIUS + 9) {
       score += 1;
       scoreDisplay.textContent = String(score);
+      popScore(scoreDisplay);
+
+      if (score > best) {
+        best = score;
+        bestDisplay.textContent = String(best);
+        localStorage.setItem('earthworm_best', String(best));
+        popScore(bestDisplay);
+      }
+
       bodyLength += SEGMENT_SPACING;
       playEatSound();
       spawnFood();
@@ -457,6 +483,15 @@
 
     drawFood();
     drawWorm();
+
+    // Bold, compact square play-area boundary: top + bottom + left + right.
+    // Visual only; collision/movement rules remain unchanged.
+    const b = 6;
+    ctx.save();
+    ctx.strokeStyle = '#565656';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(b, b, LOGICAL_SIZE - b * 2, LOGICAL_SIZE - b * 2);
+    ctx.restore();
   }
 
   function drawFood() {
