@@ -23,6 +23,49 @@ canvas{display:block;width:100%;height:100%}
 .game-btn:hover{background:linear-gradient(180deg,#fff 0%,#d4d4d4 100%);transform:translateY(-2px);box-shadow:0 8px 0 #6f6f6f,0 14px 26px rgba(0,0,0,.55)}
 .game-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #6f6f6f,0 4px 10px rgba(0,0,0,.5)}
 .footer-hint{color:#4a4a4a;font-size:12px;letter-spacing:1px;text-align:center}
+
+/* MOBILE-ONLY CONTROLS — hidden on desktop */
+.mobile-controls{
+display:none;
+}
+
+@media (hover:none) and (pointer:coarse){
+.mobile-controls{
+display:grid;
+grid-template-columns:repeat(3,56px);
+grid-template-rows:repeat(2,56px);
+gap:8px;
+margin-top:4px;
+touch-action:none;
+user-select:none;
+-webkit-user-select:none;
+}
+.mobile-control{
+width:56px;
+height:56px;
+border:1px solid rgba(255,255,255,.16);
+border-radius:14px;
+background:linear-gradient(180deg,#202020 0%,#101010 100%);
+color:#e8e8e8;
+font-size:24px;
+font-weight:700;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 5px 12px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
+}
+.mobile-control:active{
+transform:scale(.94);
+background:#2a2a2a;
+}
+.mobile-up{grid-column:2;grid-row:1}
+.mobile-left{grid-column:1;grid-row:2}
+.mobile-down{grid-column:2;grid-row:2}
+.mobile-right{grid-column:3;grid-row:2}
+}
+
 </style>
 </head>
 <body>
@@ -43,6 +86,13 @@ canvas{display:block;width:100%;height:100%}
 <div class="overlay-sub" id="finalScoreText">Score: 0</div>
 <button class="game-btn" id="playAgainBtn">Play Again</button>
 </div>
+</div>
+
+<div class="mobile-controls" id="mobileControls" aria-label="Mobile controls">
+<button class="mobile-control mobile-up" data-dir="up" aria-label="Up">▲</button>
+<button class="mobile-control mobile-left" data-dir="left" aria-label="Left">◀</button>
+<button class="mobile-control mobile-down" data-dir="down" aria-label="Down">▼</button>
+<button class="mobile-control mobile-right" data-dir="right" aria-label="Right">▶</button>
 </div>
 <div class="footer-hint">Stay inside the square boundary — don't cross your own trail</div>
 </div>
@@ -184,24 +234,68 @@ window.addEventListener('keydown',(e)=>{
 if(!gameRunning)return;
 switch(e.key){
 case'ArrowUp':case'w':case'W':setDirection(0,-1);e.preventDefault();break;
-case'ArrowDown':case's':case'S':setDirection(0,1);e.preventDefault();break;
+case'ArrowDown':case's':
+
+/* MOBILE-ONLY BUTTON INPUT — desktop keyboard/input remains unchanged */
+const mobileControls=document.getElementById('mobileControls');
+
+mobileControls.addEventListener('pointerdown',(e)=>{
+e.preventDefault();
+if(!gameRunning)return;
+
+const button=e.target.closest('.mobile-control');
+if(!button)return;
+
+switch(button.dataset.dir){
+case'up':setDirection(0,-1);break;
+case'down':setDirection(0,1);break;
+case'left':setDirection(-1,0);break;
+case'right':setDirection(1,0);break;
+}
+},{passive:false});
+
+mobileControls.addEventListener('touchstart',(e)=>{
+e.preventDefault();
+},{passive:false});
+case'S':setDirection(0,1);e.preventDefault();break;
 case'ArrowLeft':case'a':case'A':setDirection(-1,0);e.preventDefault();break;
 case'ArrowRight':case'd':case'D':setDirection(1,0);e.preventDefault();break;
 }
 },{passive:false});
 
 /* MOBILE SWIPE INPUT — isolated and independent from keyboard input */
+const touchCapable=('ontouchstart'in window)||(navigator.maxTouchPoints>0);
+
+if(touchCapable){
 let swipeStartX=0;
 let swipeStartY=0;
 let swipeTracking=false;
-let swipeCommandSent=false;
 
-function handleSwipeEnd(clientX,clientY){
-if(!swipeTracking||!gameRunning||swipeCommandSent)return;
+boardContainer.addEventListener('touchstart',(e)=>{
+if(!gameRunning||e.touches.length!==1){
+swipeTracking=false;
+return;
+}
+const touch=e.touches[0];
+swipeStartX=touch.clientX;
+swipeStartY=touch.clientY;
+swipeTracking=true;
+},{passive:true});
 
-const dx=clientX-swipeStartX;
-const dy=clientY-swipeStartY;
-const MIN_SWIPE_DISTANCE=25;
+boardContainer.addEventListener('touchmove',(e)=>{
+if(!swipeTracking||!gameRunning)return;
+e.preventDefault();
+},{passive:false});
+
+boardContainer.addEventListener('touchend',(e)=>{
+if(!swipeTracking||!gameRunning)return;
+swipeTracking=false;
+if(e.changedTouches.length!==1)return;
+
+const touch=e.changedTouches[0];
+const dx=touch.clientX-swipeStartX;
+const dy=touch.clientY-swipeStartY;
+const MIN_SWIPE_DISTANCE=30;
 
 if(Math.max(Math.abs(dx),Math.abs(dy))<MIN_SWIPE_DISTANCE)return;
 
@@ -210,82 +304,12 @@ setDirection(dx>0?1:-1,0);
 }else{
 setDirection(0,dy>0?1:-1);
 }
+},{passive:true});
 
-swipeCommandSent=true;
+boardContainer.addEventListener('touchcancel',()=>{
+swipeTracking=false;
+},{passive:true});
 }
-
-/* Touch events */
-boardContainer.addEventListener('touchstart',(e)=>{
-if(!gameRunning||e.touches.length!==1)return;
-const t=e.touches[0];
-swipeStartX=t.clientX;
-swipeStartY=t.clientY;
-swipeTracking=true;
-swipeCommandSent=false;
-e.preventDefault();
-},{passive:false});
-
-boardContainer.addEventListener('touchmove',(e)=>{
-if(!swipeTracking||!gameRunning)return;
-e.preventDefault();
-
-if(e.touches.length!==1)return;
-
-const t=e.touches[0];
-handleSwipeEnd(t.clientX,t.clientY);
-},{passive:false});
-
-boardContainer.addEventListener('touchend',(e)=>{
-if(!swipeTracking)return;
-
-if(e.changedTouches.length===1){
-const t=e.changedTouches[0];
-handleSwipeEnd(t.clientX,t.clientY);
-}
-
-swipeTracking=false;
-swipeCommandSent=false;
-e.preventDefault();
-},{passive:false});
-
-boardContainer.addEventListener('touchcancel',(e)=>{
-swipeTracking=false;
-swipeCommandSent=false;
-e.preventDefault();
-},{passive:false});
-
-/* Pointer events fallback for Android Chrome / iOS Safari */
-boardContainer.addEventListener('pointerdown',(e)=>{
-if(!gameRunning||e.pointerType==='mouse')return;
-swipeStartX=e.clientX;
-swipeStartY=e.clientY;
-swipeTracking=true;
-swipeCommandSent=false;
-if(boardContainer.setPointerCapture){
-try{boardContainer.setPointerCapture(e.pointerId);}catch(_){}
-}
-e.preventDefault();
-},{passive:false});
-
-boardContainer.addEventListener('pointermove',(e)=>{
-if(!swipeTracking||!gameRunning||e.pointerType==='mouse')return;
-e.preventDefault();
-handleSwipeEnd(e.clientX,e.clientY);
-},{passive:false});
-
-boardContainer.addEventListener('pointerup',(e)=>{
-if(!swipeTracking||e.pointerType==='mouse')return;
-handleSwipeEnd(e.clientX,e.clientY);
-swipeTracking=false;
-swipeCommandSent=false;
-e.preventDefault();
-},{passive:false});
-
-boardContainer.addEventListener('pointercancel',(e)=>{
-swipeTracking=false;
-swipeCommandSent=false;
-e.preventDefault();
-},{passive:false});
 
 function gameLoop(timestamp){
 if(!gameRunning)return;
