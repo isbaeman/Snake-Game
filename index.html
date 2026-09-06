@@ -1,1073 +1,619 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
 <title>Earthworm Snake</title>
-
 <style>
-
-  * {
-
-    margin: 0;
-
-    padding: 0;
-
-    box-sizing: border-box;
-
-    -webkit-tap-highlight-color: transparent;
-
-  }
-
-  html, body {
-
-    height: 100%;
-
-    background: #050505;
-
-    background: radial-gradient(ellipse at center, #0c0c0c 0%, #030303 70%);
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-
-    overflow: hidden;
-
-  }
-
-  .game-wrapper {
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    gap: 14px;
-
-    padding: 16px;
-
-    width: 100%;
-
-    max-width: 640px;
-
-  }
-
-  .hud {
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    gap: 8px;
-
-    width: 100%;
-
-    max-width: 600px;
-
-    padding: 0 4px;
-
-  }
-
-  .score-panel {
-
-    color: #a8a8a8;
-
-    font-size: 12px;
-
-    letter-spacing: 1.8px;
-
-    font-weight: 700;
-
-    background: rgba(255, 255, 255, 0.025);
-
-    border: 1px solid rgba(255, 255, 255, 0.10);
-
-    padding: 7px 13px;
-
-    border-radius: 6px;
-
-    min-width: 112px;
-
-    text-align: center;
-
-  }
-
-  .score-panel span {
-
-    color: #f0f0f0;
-
-    font-weight: 800;
-
-    display: inline-block;
-
-    min-width: 1ch;
-
-    transition: transform 0.12s ease;
-
-  }
-
-  .score-panel span.score-pop {
-
-    transform: scale(1.18);
-
-  }
-
-  .board-container {
-
-    position: relative;
-
-    width: min(100%, 500px);
-
-    max-width: 500px;
-
-    aspect-ratio: 1 / 1;
-
-    border: 3px solid #555555;
-
-    border-radius: 4px;
-
-    background: #080808;
-
-    box-shadow:
-
-      0 0 0 1px rgba(255, 255, 255, 0.02),
-
-      0 20px 60px rgba(0, 0, 0, 0.7),
-
-      inset 0 0 40px rgba(0, 0, 0, 0.6);
-
-    overflow: hidden;
-
-  }
-
-  canvas {
-
-    display: block;
-
-    width: 100%;
-
-    height: 100%;
-
-  }
-
-  .overlay {
-
-    position: absolute;
-
-    inset: 0;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 22px;
-
-    background: rgba(3, 3, 3, 0.72);
-
-    backdrop-filter: blur(3px);
-
-    -webkit-backdrop-filter: blur(3px);
-
-    opacity: 1;
-
-    transition: opacity 0.35s ease;
-
-    z-index: 10;
-
-  }
-
-  .overlay.hidden {
-
-    opacity: 0;
-
-    pointer-events: none;
-
-  }
-
-  .overlay-title {
-
-    color: #eaeaea;
-
-    font-size: clamp(26px, 6vw, 38px);
-
-    letter-spacing: 6px;
-
-    font-weight: 700;
-
-    text-transform: uppercase;
-
-    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
-
-  }
-
-  .overlay-title.game-over {
-
-    color: #d9463f;
-
-  }
-
-  .overlay-sub {
-
-    color: #808080;
-
-    font-size: 13px;
-
-    letter-spacing: 2px;
-
-    margin-top: -12px;
-
-  }
-
-  .game-btn {
-
-    appearance: none;
-
-    border: none;
-
-    outline: none;
-
-    cursor: pointer;
-
-    padding: 14px 40px;
-
-    font-size: 14px;
-
-    letter-spacing: 3px;
-
-    font-weight: 700;
-
-    text-transform: uppercase;
-
-    color: #0a0a0a;
-
-    background: linear-gradient(180deg, #e8e8e8 0%, #c4c4c4 100%);
-
-    border-radius: 30px;
-
-    box-shadow:
-
-      0 6px 0 #6f6f6f,
-
-      0 10px 20px rgba(0, 0, 0, 0.5);
-
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
-
-  }
-
-  .game-btn:hover {
-
-    background: linear-gradient(180deg, #ffffff 0%, #d4d4d4 100%);
-
-    transform: translateY(-2px);
-
-    box-shadow:
-
-      0 8px 0 #6f6f6f,
-
-      0 14px 26px rgba(0, 0, 0, 0.55);
-
-  }
-
-  .game-btn:active {
-
-    transform: translateY(3px);
-
-    box-shadow:
-
-      0 2px 0 #6f6f6f,
-
-      0 4px 10px rgba(0, 0, 0, 0.5);
-
-  }
-
-  .footer-hint {
-
-    color: #4a4a4a;
-
-    font-size: 12px;
-
-    letter-spacing: 1px;
-
-    text-align: center;
-
-  }
-
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    height: 100%;
+    background: #050505;
+    background: radial-gradient(ellipse at center, #0c0c0c 0%, #030303 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  .game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .hud {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 600px;
+    padding: 0 4px;
+  }
+
+  .score-panel {
+    color: #a8a8a8;
+    font-size: 12px;
+    letter-spacing: 1.8px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 7px 13px;
+    border-radius: 6px;
+    min-width: 112px;
+    text-align: center;
+  }
+
+  .score-panel span {
+    color: #f0f0f0;
+    font-weight: 800;
+    display: inline-block;
+    min-width: 1ch;
+    transition: transform 0.12s ease;
+  }
+
+  .score-panel span.score-pop {
+    transform: scale(1.18);
+  }
+
+  .board-container {
+    position: relative;
+    width: min(100%, 500px);
+    max-width: 500px;
+    aspect-ratio: 1 / 1;
+    border: 3px solid #555555;
+    border-radius: 4px;
+    background: #080808;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 20px 60px rgba(0, 0, 0, 0.7),
+      inset 0 0 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    background: rgba(3, 3, 3, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    z-index: 10;
+  }
+
+  .overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .overlay-title {
+    color: #eaeaea;
+    font-size: clamp(26px, 6vw, 38px);
+    letter-spacing: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  }
+
+  .overlay-title.game-over {
+    color: #d9463f;
+  }
+
+  .overlay-sub {
+    color: #808080;
+    font-size: 13px;
+    letter-spacing: 2px;
+    margin-top: -12px;
+  }
+
+  .game-btn {
+    appearance: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 40px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0a0a0a;
+    background: linear-gradient(180deg, #e8e8e8 0%, #c4c4c4 100%);
+    border-radius: 30px;
+    box-shadow:
+      0 6px 0 #6f6f6f,
+      0 10px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+  }
+
+  .game-btn:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #d4d4d4 100%);
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 0 #6f6f6f,
+      0 14px 26px rgba(0, 0, 0, 0.55);
+  }
+
+  .game-btn:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 2px 0 #6f6f6f,
+      0 4px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .footer-hint {
+    color: #4a4a4a;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-align: center;
+  }
 </style>
-
 </head>
-
 <body>
 
-  <div class="game-wrapper">
+  <div class="game-wrapper">
+    <div class="hud">
+      <div class="score-panel">SCORE&nbsp; <span id="scoreDisplay">0</span></div>
+      <div class="score-panel">HIGH SCORE&nbsp; <span id="bestDisplay">0</span></div>
+    </div>
 
-    <div class="hud">
+    <div class="board-container" id="boardContainer">
+      <canvas id="gameCanvas"></canvas>
 
-      <div class="score-panel">SCORE  <span id="scoreDisplay">0</span></div>
+      <div class="overlay" id="startOverlay">
+        <div class="overlay-title">Earthworm</div>
+        <div class="overlay-sub">Arrow keys or WASD to move</div>
+        <button class="game-btn" id="startBtn">Start Game</button>
+      </div>
 
-      <div class="score-panel">HIGH SCORE  <span id="bestDisplay">0</span></div>
+      <div class="overlay hidden" id="gameOverOverlay">
+        <div class="overlay-title game-over">Game Over</div>
+        <div class="overlay-sub" id="finalScoreText">Score: 0</div>
+        <button class="game-btn" id="playAgainBtn">Play Again</button>
+      </div>
+    </div>
 
-    </div>
-
-    <div class="board-container" id="boardContainer">
-
-      <canvas id="gameCanvas"></canvas>
-
-      <div class="overlay" id="startOverlay">
-
-        <div class="overlay-title">Earthworm</div>
-
-        <div class="overlay-sub">Arrow keys or WASD to move</div>
-
-        <button class="game-btn" id="startBtn">Start Game</button>
-
-      </div>
-
-      <div class="overlay hidden" id="gameOverOverlay">
-
-        <div class="overlay-title game-over">Game Over</div>
-
-        <div class="overlay-sub" id="finalScoreText">Score: 0</div>
-
-        <button class="game-btn" id="playAgainBtn">Play Again</button>
-
-      </div>
-
-    </div>
-
-    <div class="footer-hint">Stay inside the square boundary — don't cross your own trail</div>
-
-  </div>
+    <div class="footer-hint">Stay inside the square boundary — don't cross your own trail</div>
+  </div>
 
 <script>
-
 (function () {
-
-  'use strict';
-
-  *// ---------------------------------------------------------------------*
-
-  *// SETUP*
-
-  *// ---------------------------------------------------------------------*
-
-  const canvas = document.getElementById('gameCanvas');
-
-  const ctx = canvas.getContext('2d');
-
-  const boardContainer = document.getElementById('boardContainer');
-
-  const startOverlay = document.getElementById('startOverlay');
-
-  const gameOverOverlay = document.getElementById('gameOverOverlay');
-
-  const startBtn = document.getElementById('startBtn');
-
-  const playAgainBtn = document.getElementById('playAgainBtn');
-
-  const scoreDisplay = document.getElementById('scoreDisplay');
-
-  const bestDisplay = document.getElementById('bestDisplay');
-
-  const finalScoreText = document.getElementById('finalScoreText');
-
-  *// Fixed internal logical resolution — independent of CSS/display scaling.*
-
-  const LOGICAL_SIZE = 600;
-
-  const PADDING = 14;          *// keeps the worm's head visually inside the dashed border*
-
-  const MIN_X = PADDING, MAX_X = LOGICAL_SIZE - PADDING;
-
-  const MIN_Y = PADDING, MAX_Y = LOGICAL_SIZE - PADDING;
-
-  let dpr = window.devicePixelRatio || 1;
-
-  function resizeCanvas() {
-
-    dpr = window.devicePixelRatio || 1;
-
-    canvas.width = LOGICAL_SIZE * dpr;
-
-    canvas.height = LOGICAL_SIZE * dpr;
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  }
-
-  resizeCanvas();
-
-  window.addEventListener('resize', resizeCanvas);
-
-  *// ---------------------------------------------------------------------*
-
-  *// GAME STATE*
-
-  *// ---------------------------------------------------------------------*
-
-  const START_THICKNESS = 14;      *// px, within the 12-16px requirement*
-
-  const SEGMENT_SPACING = 15;      *// logical body-length added per food item*
-
-  const SPEED = 150;               *// px / second*
-
-  const HEAD_RADIUS = START_THICKNESS / 2;
-
-  let gameRunning = false;
-
-  let gameOver = false;
-
-  let score = 0;
-
-  let best = Number(localStorage.getItem('earthworm_best') || 0) || 0;
-
-  bestDisplay.textContent = best;
-
-  let head = { x: 0, y: 0 };
-
-  let direction = { x: 1, y: 0 };   *// current movement vector*
-
-  let pendingDirection = { x: 1, y: 0 };
-
-  let bodyLength = 0;               *// total desired length of the worm, in px*
-
-  let path = [];                    *// recorded head positions (trail), most-recent first*
-
-  let food = { x: 0, y: 0 };
-
-  let lastTimestamp = null;
-
-  let rafId = null;
-
-  function popScore(element) {
-
-    element.classList.remove('score-pop');
-
-    void element.offsetWidth;
-
-    element.classList.add('score-pop');
-
-    setTimeout(() => element.classList.remove('score-pop'), 120);
-
-  }
-
-  *// Web Audio context is created lazily on first user gesture (Start button click).*
-
-  let audioCtx = null;
-
-  function playEatSound() {
-
-    if (!audioCtx) return;
-
-    const now = audioCtx.currentTime;
-
-    const osc = audioCtx.createOscillator();
-
-    const gain = audioCtx.createGain();
-
-    osc.type = 'sine';
-
-    osc.frequency.setValueAtTime(520, now);
-
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
-
-    gain.gain.setValueAtTime(0.0001, now);
-
-    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.015);
-
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
-
-    osc.connect(gain);
-
-    gain.connect(audioCtx.destination);
-
-    osc.start(now);
-
-    osc.stop(now + 0.18);
-
-  }
-
-  *// ---------------------------------------------------------------------*
-
-  *// RESET / INIT*
-
-  *// ---------------------------------------------------------------------*
-
-  function resetGame() {
-
-    score = 0;
-
-    scoreDisplay.textContent = '0';
-
-    head.x = LOGICAL_SIZE / 2;
-
-    head.y = LOGICAL_SIZE / 2;
-
-    direction = { x: 1, y: 0 };
-
-    pendingDirection = { x: 1, y: 0 };
-
-    *// Exactly 2 starting segments worth of body length.*
-
-    bodyLength = SEGMENT_SPACING * 2;
-
-    *// Seed the path with points trailing behind the head so the worm*
-
-    *// already looks like one continuous connected body at t = 0.*
-
-    path = [];
-
-    const seedSteps = 60;
-
-    for (let i = 0; i <= seedSteps; i++) {
-
-      path.push({
-
-        x: head.x - direction.x * i * 1.5,
-
-        y: head.y - direction.y * i * 1.5
-
-      });
-
-    }
-
-    spawnFood();
-
-    lastTimestamp = null;
-
-  }
-
-  function spawnFood() {
-
-    *// Keep the new ball well clear of the head so the worm can never*
-
-    *// spawn-in on top of it and chain-eat instantly.*
-
-    const HEAD_CLEARANCE = 90;
-
-    const BODY_CLEARANCE = 26;
-
-    let candidate = null;
-
-    let attempts = 0;
-
-    const MAX_RANDOM_ATTEMPTS = 100;
-
-    while (attempts < MAX_RANDOM_ATTEMPTS) {
-
-      const c = {
-
-        x: MIN_X + Math.random() * (MAX_X - MIN_X),
-
-        y: MIN_Y + Math.random() * (MAX_Y - MIN_Y)
-
-      };
-
-      attempts++;
-
-      if (dist(c, head) >= HEAD_CLEARANCE && !isNearBody(c, BODY_CLEARANCE)) {
-
-        candidate = c;
-
-        break;
-
-      }
-
-    }
-
-    *// Guaranteed fallback: scan a coarse grid of the playable area and*
-
-    *// pick whichever valid cell is farthest from the head. This always*
-
-    *// terminates with a legal, well-separated position.*
-
-    if (!candidate) {
-
-      let best = null;
-
-      let bestDist = -1;
-
-      const GRID_STEP = 24;
-
-      for (let gx = MIN_X; gx <= MAX_X; gx += GRID_STEP) {
-
-        for (let gy = MIN_Y; gy <= MAX_Y; gy += GRID_STEP) {
-
-          const c = { x: gx, y: gy };
-
-          if (isNearBody(c, BODY_CLEARANCE)) continue;
-
-          const d = dist(c, head);
-
-          if (d > bestDist) {
-
-            bestDist = d;
-
-            best = c;
-
-          }
-
-        }
-
-      }
-
-      candidate = best || { x: LOGICAL_SIZE / 2, y: LOGICAL_SIZE / 2 };
-
-    }
-
-    food = candidate;
-
-  }
-
-  function isNearBody(point, threshold) {
-
-    if (dist(point, head) < threshold) return true;
-
-    for (let i = 0; i < path.length; i += 4) {
-
-      if (dist(point, path[i]) < threshold) return true;
-
-    }
-
-    return false;
-
-  }
-
-  function dist(a, b) {
-
-    const dx = a.x - b.x, dy = a.y - b.y;
-
-    return Math.sqrt(dx * dx + dy * dy);
-
-  }
-
-  *// ---------------------------------------------------------------------*
-
-  *// INPUT*
-
-  *// ---------------------------------------------------------------------*
-
-  function setDirection(nx, ny) {
-
-    *// Prevent an instant 180-degree reversal.*
-
-    if (direction.x === -nx && direction.y === -ny) return;
-
-    pendingDirection = { x: nx, y: ny };
-
-  }
-
-  window.addEventListener('keydown', (e) => {
-
-    if (!gameRunning) return;
-
-    switch (e.key) {
-
-      case 'ArrowUp': case 'w': case 'W': setDirection(0, -1); e.preventDefault(); break;
-
-      case 'ArrowDown': case 's': case 'S': setDirection(0, 1); e.preventDefault(); break;
-
-      case 'ArrowLeft': case 'a': case 'A': setDirection(-1, 0); e.preventDefault(); break;
-
-      case 'ArrowRight': case 'd': case 'D': setDirection(1, 0); e.preventDefault(); break;
-
-    }
-
-  }, { passive: false });
-
-  *// ---------------------------------------------------------------------*
-
-  *// GAME LOOP*
-
-  *// ---------------------------------------------------------------------*
-
-  function gameLoop(timestamp) {
-
-    if (!gameRunning) return;
-
-    if (lastTimestamp === null) lastTimestamp = timestamp;
-
-    let dt = (timestamp - lastTimestamp) / 1000;
-
-    lastTimestamp = timestamp;
-
-    *// Guard against huge dt spikes (e.g. tab was backgrounded).*
-
-    if (dt > 0.1) dt = 0.1;
-
-    update(dt);
-
-    render();
-
-    rafId = requestAnimationFrame(gameLoop);
-
-  }
-
-  function update(dt) {
-
-    direction = pendingDirection;
-
-    const step = SPEED * dt;
-
-    head.x += direction.x * step;
-
-    head.y += direction.y * step;
-
-    *// Record the new head position into the path history.*
-
-    path.unshift({ x: head.x, y: head.y });
-
-    *// Trim the path so it never grows unbounded (keep a safety buffer*
-
-    *// beyond the current visible body length).*
-
-    const maxPathDistanceNeeded = bodyLength + 60;
-
-    let travelled = 0;
-
-    for (let i = 1; i < path.length; i++) {
-
-      travelled += dist(path[i - 1], path[i]);
-
-      if (travelled > maxPathDistanceNeeded) {
-
-        path.length = i + 1;
-
-        break;
-
-      }
-
-    }
-
-    *// --- Boundary collision ---*
-
-    if (head.x - HEAD_RADIUS < 0 || head.x + HEAD_RADIUS > LOGICAL_SIZE ||
-
-        head.y - HEAD_RADIUS < 0 || head.y + HEAD_RADIUS > LOGICAL_SIZE) {
-
-      return endGame();
-
-    }
-
-    *// --- Self collision ---*
-
-    *// Skip points close to the head (they're always near it) to avoid*
-
-    *// false positives right after a turn.*
-
-    const skipDistance = HEAD_RADIUS * 3.2;
-
-    let d = 0;
-
-    for (let i = 1; i < path.length; i++) {
-
-      d += dist(path[i - 1], path[i]);
-
-      if (d < skipDistance) continue;
-
-      if (d > bodyLength) break;
-
-      if (dist(head, path[i]) < HEAD_RADIUS * 0.9) {
-
-        return endGame();
-
-      }
-
-    }
-
-    *// --- Food collision ---*
-
-    if (dist(head, food) < HEAD_RADIUS + 9) {
-
-      score += 1;
-
-      scoreDisplay.textContent = String(score);
-
-      popScore(scoreDisplay);
-
-      if (score > best) {
-
-        best = score;
-
-        bestDisplay.textContent = String(best);
-
-        localStorage.setItem('earthworm_best', String(best));
-
-        popScore(bestDisplay);
-
-      }
-
-      bodyLength += SEGMENT_SPACING;
-
-      playEatSound();
-
-      spawnFood();
-
-    }
-
-  }
-
-  *// ---------------------------------------------------------------------*
-
-  *// RENDER*
-
-  *// ---------------------------------------------------------------------*
-
-  function render() {
-
-    ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
-
-    *// subtle board texture*
-
-    ctx.fillStyle = '#080808';
-
-    ctx.fillRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
-
-    drawFood();
-
-    drawWorm();
-
-    *// Bold, compact square play-area boundary: top + bottom + left + right.*
-
-    *// Visual only; collision/movement rules remain unchanged.*
-
-    const b = 6;
-
-    ctx.save();
-
-    ctx.strokeStyle = '#565656';
-
-    ctx.lineWidth = 3;
-
-    ctx.strokeRect(b, b, LOGICAL_SIZE - b * 2, LOGICAL_SIZE - b * 2);
-
-    ctx.restore();
-
-  }
-
-  function drawFood() {
-
-    const r = 7;
-
-    const gradient = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, r * 1.8);
-
-    gradient.addColorStop(0, '#e0473f');
-
-    gradient.addColorStop(1, '#7a1e1a');
-
-    ctx.beginPath();
-
-    ctx.fillStyle = gradient;
-
-    ctx.arc(food.x, food.y, r, 0, Math.PI * 2);
-
-    ctx.fill();
-
-    ctx.beginPath();
-
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-
-    ctx.arc(food.x - r * 0.3, food.y - r * 0.3, r * 0.3, 0, Math.PI * 2);
-
-    ctx.fill();
-
-  }
-
-  function drawWorm() {
-
-    *// Build the ordered list of points from head to tail, up to bodyLength.*
-
-    const pts = [{ x: head.x, y: head.y }];
-
-    let d = 0;
-
-    for (let i = 0; i < path.length; i++) {
-
-      const prev = pts[pts.length - 1];
-
-      const p = path[i];
-
-      const segDist = dist(prev, p);
-
-      if (d + segDist > bodyLength) {
-
-        *// Interpolate the exact tail point so the body length is precise.*
-
-        const remaining = bodyLength - d;
-
-        const t = segDist === 0 ? 0 : remaining / segDist;
-
-        pts.push({
-
-          x: prev.x + (p.x - prev.x) * t,
-
-          y: prev.y + (p.y - prev.y) * t
-
-        });
-
-        break;
-
-      }
-
-      d += segDist;
-
-      pts.push(p);
-
-    }
-
-    if (pts.length < 2) return;
-
-    ctx.lineCap = 'round';
-
-    ctx.lineJoin = 'round';
-
-    *// Draw as a series of short tapering strokes from head (thick) to tail (thin),*
-
-    *// producing one continuous organic body rather than separate visible balls.*
-
-    const total = pts.length;
-
-    for (let i = 0; i < total - 1; i++) {
-
-      const t = i / (total - 1);              *// 0 at head, 1 at tail*
-
-      const width = START_THICKNESS * (1 - t * 0.55) + 2;
-
-      const shade = Math.round(18 + t * 10);   *// very subtle darkening toward the tail*
-
-      ctx.strokeStyle = `rgb(${shade}, ${shade}, ${shade})`;
-
-      ctx.lineWidth = Math.max(width, 3);
-
-      ctx.beginPath();
-
-      ctx.moveTo(pts[i].x, pts[i].y);
-
-      ctx.lineTo(pts[i + 1].x, pts[i + 1].y);
-
-      ctx.stroke();
-
-    }
-
-    *// Soft highlight along the head for a subtle sense of dimensionality.*
-
-    ctx.beginPath();
-
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-
-    ctx.arc(head.x, head.y, HEAD_RADIUS * 0.9, 0, Math.PI * 2);
-
-    ctx.fill();
-
-  }
-
-  *// ---------------------------------------------------------------------*
-
-  *// START / GAME OVER FLOW*
-
-  *// ---------------------------------------------------------------------*
-
-  function startGame() {
-
-    if (!audioCtx) {
-
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-
-      audioCtx = new AudioCtx();
-
-    }
-
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    resetGame();
-
-    gameOver = false;
-
-    gameRunning = true;
-
-    startOverlay.classList.add('hidden');
-
-    gameOverOverlay.classList.add('hidden');
-
-    if (rafId) {
-
-      cancelAnimationFrame(rafId);
-
-      rafId = null;
-
-    }
-
-    lastTimestamp = null;
-
-    render();
-
-    rafId = requestAnimationFrame(gameLoop);
-
-  }
-
-  function endGame() {
-
-    gameRunning = false;
-
-    gameOver = true;
-
-    if (rafId) {
-
-      cancelAnimationFrame(rafId);
-
-      rafId = null;
-
-    }
-
-    if (score > best) {
-
-      best = score;
-
-      bestDisplay.textContent = String(best);
-
-      localStorage.setItem('earthworm_best', String(best));
-
-    }
-
-    finalScoreText.textContent = `Score: ${score}`;
-
-    gameOverOverlay.classList.remove('hidden');
-
-  }
-
-  startBtn.addEventListener('click', startGame);
-
-  playAgainBtn.addEventListener('click', startGame);
-
-  *// ---------------------------------------------------------------------*
-
-  *// INITIAL STATIC FRAME (snake visible but still, before Start is pressed)*
-
-  *// ---------------------------------------------------------------------*
-
-  resetGame();
-
-  render();
-
+  'use strict';
+
+  // ---------------------------------------------------------------------
+  // SETUP
+  // ---------------------------------------------------------------------
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const boardContainer = document.getElementById('boardContainer');
+  const startOverlay = document.getElementById('startOverlay');
+  const gameOverOverlay = document.getElementById('gameOverOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const bestDisplay = document.getElementById('bestDisplay');
+  const finalScoreText = document.getElementById('finalScoreText');
+
+  // Fixed internal logical resolution — independent of CSS/display scaling.
+  const LOGICAL_SIZE = 600;
+  const PADDING = 14;          // keeps the worm's head visually inside the dashed border
+  const MIN_X = PADDING, MAX_X = LOGICAL_SIZE - PADDING;
+  const MIN_Y = PADDING, MAX_Y = LOGICAL_SIZE - PADDING;
+
+  let dpr = window.devicePixelRatio || 1;
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = LOGICAL_SIZE * dpr;
+    canvas.height = LOGICAL_SIZE * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // ---------------------------------------------------------------------
+  // GAME STATE
+  // ---------------------------------------------------------------------
+  const START_THICKNESS = 14;      // px, within the 12-16px requirement
+  const SEGMENT_SPACING = 15;      // logical body-length added per food item
+  const SPEED = 150;               // px / second
+  const HEAD_RADIUS = START_THICKNESS / 2;
+
+  let gameRunning = false;
+  let gameOver = false;
+  let score = 0;
+  let best = Number(localStorage.getItem('earthworm_best') || 0) || 0;
+  bestDisplay.textContent = best;
+
+  let head = { x: 0, y: 0 };
+  let direction = { x: 1, y: 0 };   // current movement vector
+  let pendingDirection = { x: 1, y: 0 };
+  let bodyLength = 0;               // total desired length of the worm, in px
+  let path = [];                    // recorded head positions (trail), most-recent first
+  let food = { x: 0, y: 0 };
+  let lastTimestamp = null;
+  let rafId = null;
+
+  function popScore(element) {
+    element.classList.remove('score-pop');
+    void element.offsetWidth;
+    element.classList.add('score-pop');
+    setTimeout(() => element.classList.remove('score-pop'), 120);
+  }
+
+  // Web Audio context is created lazily on first user gesture (Start button click).
+  let audioCtx = null;
+
+  function playEatSound() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  }
+
+  // ---------------------------------------------------------------------
+  // RESET / INIT
+  // ---------------------------------------------------------------------
+  function resetGame() {
+    score = 0;
+    scoreDisplay.textContent = '0';
+
+    head.x = LOGICAL_SIZE / 2;
+    head.y = LOGICAL_SIZE / 2;
+    direction = { x: 1, y: 0 };
+    pendingDirection = { x: 1, y: 0 };
+
+    // Exactly 2 starting segments worth of body length.
+    bodyLength = SEGMENT_SPACING * 2;
+
+    // Seed the path with points trailing behind the head so the worm
+    // already looks like one continuous connected body at t = 0.
+    path = [];
+    const seedSteps = 60;
+    for (let i = 0; i <= seedSteps; i++) {
+      path.push({
+        x: head.x - direction.x * i * 1.5,
+        y: head.y - direction.y * i * 1.5
+      });
+    }
+
+    spawnFood();
+    lastTimestamp = null;
+  }
+
+  function spawnFood() {
+    // Keep the new ball well clear of the head so the worm can never
+    // spawn-in on top of it and chain-eat instantly.
+    const HEAD_CLEARANCE = 90;
+    const BODY_CLEARANCE = 26;
+
+    let candidate = null;
+    let attempts = 0;
+    const MAX_RANDOM_ATTEMPTS = 100;
+
+    while (attempts < MAX_RANDOM_ATTEMPTS) {
+      const c = {
+        x: MIN_X + Math.random() * (MAX_X - MIN_X),
+        y: MIN_Y + Math.random() * (MAX_Y - MIN_Y)
+      };
+      attempts++;
+      if (dist(c, head) >= HEAD_CLEARANCE && !isNearBody(c, BODY_CLEARANCE)) {
+        candidate = c;
+        break;
+      }
+    }
+
+    // Guaranteed fallback: scan a coarse grid of the playable area and
+    // pick whichever valid cell is farthest from the head. This always
+    // terminates with a legal, well-separated position.
+    if (!candidate) {
+      let best = null;
+      let bestDist = -1;
+      const GRID_STEP = 24;
+      for (let gx = MIN_X; gx <= MAX_X; gx += GRID_STEP) {
+        for (let gy = MIN_Y; gy <= MAX_Y; gy += GRID_STEP) {
+          const c = { x: gx, y: gy };
+          if (isNearBody(c, BODY_CLEARANCE)) continue;
+          const d = dist(c, head);
+          if (d > bestDist) {
+            bestDist = d;
+            best = c;
+          }
+        }
+      }
+      candidate = best || { x: LOGICAL_SIZE / 2, y: LOGICAL_SIZE / 2 };
+    }
+
+    food = candidate;
+  }
+
+  function isNearBody(point, threshold) {
+    if (dist(point, head) < threshold) return true;
+    for (let i = 0; i < path.length; i += 4) {
+      if (dist(point, path[i]) < threshold) return true;
+    }
+    return false;
+  }
+
+  function dist(a, b) {
+    const dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // ---------------------------------------------------------------------
+  // INPUT
+  // ---------------------------------------------------------------------
+  function setDirection(nx, ny) {
+    // Prevent an instant 180-degree reversal.
+    if (direction.x === -nx && direction.y === -ny) return;
+    pendingDirection = { x: nx, y: ny };
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (!gameRunning) return;
+    switch (e.key) {
+      case 'ArrowUp': case 'w': case 'W': setDirection(0, -1); e.preventDefault(); break;
+      case 'ArrowDown': case 's': case 'S': setDirection(0, 1); e.preventDefault(); break;
+      case 'ArrowLeft': case 'a': case 'A': setDirection(-1, 0); e.preventDefault(); break;
+      case 'ArrowRight': case 'd': case 'D': setDirection(1, 0); e.preventDefault(); break;
+    }
+  }, { passive: false });
+
+  // ---------------------------------------------------------------------
+  // GAME LOOP
+  // ---------------------------------------------------------------------
+  function gameLoop(timestamp) {
+    if (!gameRunning) return;
+
+    if (lastTimestamp === null) lastTimestamp = timestamp;
+    let dt = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+    // Guard against huge dt spikes (e.g. tab was backgrounded).
+    if (dt > 0.1) dt = 0.1;
+
+    update(dt);
+    render();
+
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function update(dt) {
+    direction = pendingDirection;
+
+    const step = SPEED * dt;
+    head.x += direction.x * step;
+    head.y += direction.y * step;
+
+    // Record the new head position into the path history.
+    path.unshift({ x: head.x, y: head.y });
+
+    // Trim the path so it never grows unbounded (keep a safety buffer
+    // beyond the current visible body length).
+    const maxPathDistanceNeeded = bodyLength + 60;
+    let travelled = 0;
+    for (let i = 1; i < path.length; i++) {
+      travelled += dist(path[i - 1], path[i]);
+      if (travelled > maxPathDistanceNeeded) {
+        path.length = i + 1;
+        break;
+      }
+    }
+
+    // --- Boundary collision ---
+    if (head.x - HEAD_RADIUS < 0 || head.x + HEAD_RADIUS > LOGICAL_SIZE ||
+        head.y - HEAD_RADIUS < 0 || head.y + HEAD_RADIUS > LOGICAL_SIZE) {
+      return endGame();
+    }
+
+    // --- Self collision ---
+    // Skip points close to the head (they're always near it) to avoid
+    // false positives right after a turn.
+    const skipDistance = HEAD_RADIUS * 3.2;
+    let d = 0;
+    for (let i = 1; i < path.length; i++) {
+      d += dist(path[i - 1], path[i]);
+      if (d < skipDistance) continue;
+      if (d > bodyLength) break;
+      if (dist(head, path[i]) < HEAD_RADIUS * 0.9) {
+        return endGame();
+      }
+    }
+
+    // --- Food collision ---
+    if (dist(head, food) < HEAD_RADIUS + 9) {
+      score += 1;
+      scoreDisplay.textContent = String(score);
+      popScore(scoreDisplay);
+
+      if (score > best) {
+        best = score;
+        bestDisplay.textContent = String(best);
+        localStorage.setItem('earthworm_best', String(best));
+        popScore(bestDisplay);
+      }
+
+      bodyLength += SEGMENT_SPACING;
+      playEatSound();
+      spawnFood();
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------------------
+  function render() {
+    ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
+
+    // subtle board texture
+    ctx.fillStyle = '#080808';
+    ctx.fillRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
+
+    drawFood();
+    drawWorm();
+
+    // Bold, compact square play-area boundary: top + bottom + left + right.
+    // Visual only; collision/movement rules remain unchanged.
+    const b = 6;
+    ctx.save();
+    ctx.strokeStyle = '#565656';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(b, b, LOGICAL_SIZE - b * 2, LOGICAL_SIZE - b * 2);
+    ctx.restore();
+  }
+
+  function drawFood() {
+    const r = 7;
+    const gradient = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, r * 1.8);
+    gradient.addColorStop(0, '#e0473f');
+    gradient.addColorStop(1, '#7a1e1a');
+    ctx.beginPath();
+    ctx.fillStyle = gradient;
+    ctx.arc(food.x, food.y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.arc(food.x - r * 0.3, food.y - r * 0.3, r * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawWorm() {
+    // Build the ordered list of points from head to tail, up to bodyLength.
+    const pts = [{ x: head.x, y: head.y }];
+    let d = 0;
+    for (let i = 0; i < path.length; i++) {
+      const prev = pts[pts.length - 1];
+      const p = path[i];
+      const segDist = dist(prev, p);
+      if (d + segDist > bodyLength) {
+        // Interpolate the exact tail point so the body length is precise.
+        const remaining = bodyLength - d;
+        const t = segDist === 0 ? 0 : remaining / segDist;
+        pts.push({
+          x: prev.x + (p.x - prev.x) * t,
+          y: prev.y + (p.y - prev.y) * t
+        });
+        break;
+      }
+      d += segDist;
+      pts.push(p);
+    }
+
+    if (pts.length < 2) return;
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Draw as a series of short tapering strokes from head (thick) to tail (thin),
+    // producing one continuous organic body rather than separate visible balls.
+    const total = pts.length;
+    for (let i = 0; i < total - 1; i++) {
+      const t = i / (total - 1);              // 0 at head, 1 at tail
+      const width = START_THICKNESS * (1 - t * 0.55) + 2;
+      const shade = Math.round(18 + t * 10);   // very subtle darkening toward the tail
+      ctx.strokeStyle = `rgb(${shade}, ${shade}, ${shade})`;
+      ctx.lineWidth = Math.max(width, 3);
+      ctx.beginPath();
+      ctx.moveTo(pts[i].x, pts[i].y);
+      ctx.lineTo(pts[i + 1].x, pts[i + 1].y);
+      ctx.stroke();
+    }
+
+    // Soft highlight along the head for a subtle sense of dimensionality.
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.arc(head.x, head.y, HEAD_RADIUS * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ---------------------------------------------------------------------
+  // START / GAME OVER FLOW
+  // ---------------------------------------------------------------------
+  function startGame() {
+    if (!audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioCtx();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    resetGame();
+    gameOver = false;
+    gameRunning = true;
+
+    startOverlay.classList.add('hidden');
+    gameOverOverlay.classList.add('hidden');
+
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastTimestamp = null;
+    render();
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function endGame() {
+    gameRunning = false;
+    gameOver = true;
+
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    if (score > best) {
+      best = score;
+      bestDisplay.textContent = String(best);
+      localStorage.setItem('earthworm_best', String(best));
+    }
+
+    finalScoreText.textContent = `Score: ${score}`;
+    gameOverOverlay.classList.remove('hidden');
+  }
+
+  startBtn.addEventListener('click', startGame);
+  playAgainBtn.addEventListener('click', startGame);
+
+  // ---------------------------------------------------------------------
+  // INITIAL STATIC FRAME (snake visible but still, before Start is pressed)
+  // ---------------------------------------------------------------------
+  resetGame();
+  render();
 })();
-
 </script>
 
 </body>
-
 </html>
