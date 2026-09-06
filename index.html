@@ -196,30 +196,12 @@ let swipeStartY=0;
 let swipeTracking=false;
 let swipeCommandSent=false;
 
-boardContainer.addEventListener('touchstart',(e)=>{
-if(!gameRunning||e.touches.length!==1){
-swipeTracking=false;
-swipeCommandSent=false;
-return;
-}
-const touch=e.touches[0];
-swipeStartX=touch.clientX;
-swipeStartY=touch.clientY;
-swipeTracking=true;
-swipeCommandSent=false;
-},{passive:false});
+function handleSwipeEnd(clientX,clientY){
+if(!swipeTracking||!gameRunning||swipeCommandSent)return;
 
-boardContainer.addEventListener('touchmove',(e)=>{
-if(!swipeTracking||!gameRunning)return;
-
-e.preventDefault();
-
-if(swipeCommandSent||e.touches.length!==1)return;
-
-const touch=e.touches[0];
-const dx=touch.clientX-swipeStartX;
-const dy=touch.clientY-swipeStartY;
-const MIN_SWIPE_DISTANCE=24;
+const dx=clientX-swipeStartX;
+const dy=clientY-swipeStartY;
+const MIN_SWIPE_DISTANCE=25;
 
 if(Math.max(Math.abs(dx),Math.abs(dy))<MIN_SWIPE_DISTANCE)return;
 
@@ -230,33 +212,79 @@ setDirection(0,dy>0?1:-1);
 }
 
 swipeCommandSent=true;
+}
+
+/* Touch events */
+boardContainer.addEventListener('touchstart',(e)=>{
+if(!gameRunning||e.touches.length!==1)return;
+const t=e.touches[0];
+swipeStartX=t.clientX;
+swipeStartY=t.clientY;
+swipeTracking=true;
+swipeCommandSent=false;
+e.preventDefault();
+},{passive:false});
+
+boardContainer.addEventListener('touchmove',(e)=>{
+if(!swipeTracking||!gameRunning)return;
+e.preventDefault();
+
+if(e.touches.length!==1)return;
+
+const t=e.touches[0];
+handleSwipeEnd(t.clientX,t.clientY);
 },{passive:false});
 
 boardContainer.addEventListener('touchend',(e)=>{
 if(!swipeTracking)return;
+
+if(e.changedTouches.length===1){
+const t=e.changedTouches[0];
+handleSwipeEnd(t.clientX,t.clientY);
+}
+
 swipeTracking=false;
 swipeCommandSent=false;
-
-if(!gameRunning||e.changedTouches.length!==1)return;
-
-/* Fallback for browsers that don't deliver a useful touchmove */
-const touch=e.changedTouches[0];
-const dx=touch.clientX-swipeStartX;
-const dy=touch.clientY-swipeStartY;
-const MIN_SWIPE_DISTANCE=24;
-
-if(Math.max(Math.abs(dx),Math.abs(dy))<MIN_SWIPE_DISTANCE)return;
-
-if(Math.abs(dx)>Math.abs(dy)){
-setDirection(dx>0?1:-1,0);
-}else{
-setDirection(0,dy>0?1:-1);
-}
+e.preventDefault();
 },{passive:false});
 
-boardContainer.addEventListener('touchcancel',()=>{
+boardContainer.addEventListener('touchcancel',(e)=>{
 swipeTracking=false;
 swipeCommandSent=false;
+e.preventDefault();
+},{passive:false});
+
+/* Pointer events fallback for Android Chrome / iOS Safari */
+boardContainer.addEventListener('pointerdown',(e)=>{
+if(!gameRunning||e.pointerType==='mouse')return;
+swipeStartX=e.clientX;
+swipeStartY=e.clientY;
+swipeTracking=true;
+swipeCommandSent=false;
+if(boardContainer.setPointerCapture){
+try{boardContainer.setPointerCapture(e.pointerId);}catch(_){}
+}
+e.preventDefault();
+},{passive:false});
+
+boardContainer.addEventListener('pointermove',(e)=>{
+if(!swipeTracking||!gameRunning||e.pointerType==='mouse')return;
+e.preventDefault();
+handleSwipeEnd(e.clientX,e.clientY);
+},{passive:false});
+
+boardContainer.addEventListener('pointerup',(e)=>{
+if(!swipeTracking||e.pointerType==='mouse')return;
+handleSwipeEnd(e.clientX,e.clientY);
+swipeTracking=false;
+swipeCommandSent=false;
+e.preventDefault();
+},{passive:false});
+
+boardContainer.addEventListener('pointercancel',(e)=>{
+swipeTracking=false;
+swipeCommandSent=false;
+e.preventDefault();
 },{passive:false});
 
 function gameLoop(timestamp){
